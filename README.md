@@ -18,7 +18,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   video:
@@ -27,6 +27,7 @@ jobs:
       - uses: anglesvideo/anglesvideo-release-video-action@v1
         with:
           api-key: ${{ secrets.ANGLES_API_KEY }}
+          github-token: ${{ github.token }}
 ```
 
 Set the repository's **Website** field to your product homepage. Or provide a URL explicitly:
@@ -40,7 +41,7 @@ Set the repository's **Website** field to your product homepage. Or provide a UR
 
 The Action adds a **Product video** section to the Release body when rendering completes. The video URL is also available as the `video-url` output and in the workflow run summary.
 
-The Action needs permission to edit the Release. Pass GitHub's automatic workflow token and grant `contents: write`:
+The Action needs permission to edit the Release. The workflow above passes GitHub's automatic token and grants `contents: write`. If you prefer to add it to an existing workflow, use:
 
 ```yaml
 permissions:

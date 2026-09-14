@@ -38,19 +38,39 @@ Set the repository's **Website** field to your product homepage. Or provide a UR
           product-url: https://example.com
 ```
 
-The rendered video URL is available as the `video-url` output and in the workflow run summary. GitHub Releases do not have a comment thread, so this Action intentionally does not modify a Release.
+The Action adds a **Product video** section to the Release body when rendering completes. The video URL is also available as the `video-url` output and in the workflow run summary.
+
+The Action needs permission to edit the Release. Pass GitHub's automatic workflow token and grant `contents: write`:
+
+```yaml
+permissions:
+  contents: write
+
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anglesvideo/anglesvideo-release-video-action@v1
+        with:
+          api-key: ${{ secrets.ANGLES_API_KEY }}
+          github-token: ${{ github.token }}
+```
+
+Set `publish-to-release: false` for a manual test run or when you only want the workflow summary and output.
 
 ## Inputs
 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
 | `api-key` | Yes | — | Angles API key. Pass it from an Actions secret. |
+| `github-token` | When publishing | — | GitHub token for updating the Release body. Pass `${{ github.token }}`. |
 | `product-url` | No | Repository homepage | Homepage to use as the video source. |
 | `api-base-url` | No | `https://api.angles.video/api/developer/v1` | Angles Developer API base URL. |
 | `template-id` | No | First Angles recommendation | Existing template to use. |
 | `aspect-ratio` | No | `landscape` | `landscape` or `portrait`. |
 | `timeout-seconds` | No | `900` | Maximum render wait, between 60 and 3600 seconds. |
 | `poll-interval-seconds` | No | `10` | Status check interval, between 3 and 60 seconds. |
+| `publish-to-release` | No | `true` | Add or update the video link in the Release body. |
 
 ## Outputs
 
@@ -59,6 +79,7 @@ The rendered video URL is available as the `video-url` output and in the workflo
 | `video-url` | Final hosted video URL. |
 | `edit-url` | Angles editor link. |
 | `video-id` | Angles video ID. |
+| `release-url` | Updated GitHub Release URL. |
 
 ## Release
 

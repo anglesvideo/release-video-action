@@ -10,6 +10,9 @@ inputs:
   api-key:
     description: Angles API key with concepts:write, videos:read, and videos:render capabilities.
     required: true
+  github-token:
+    description: GitHub token used to add the finished video link to the Release body.
+    required: false
   product-url:
     description: Product homepage to turn into a video. Defaults to the repository homepage from the event payload.
     required: false
@@ -32,6 +35,10 @@ inputs:
     description: Seconds between render-status checks.
     required: false
     default: "10"
+  publish-to-release:
+    description: Add or update the video link in the current GitHub Release body.
+    required: false
+    default: "true"
 
 outputs:
   video-url:
@@ -40,6 +47,8 @@ outputs:
     description: URL to edit the video in Angles.
   video-id:
     description: ID of the Angles video.
+  release-url:
+    description: GitHub Release URL after the video link has been added.
 
 runs:
   using: node20

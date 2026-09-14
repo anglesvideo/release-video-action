@@ -17,6 +17,14 @@ function numberInput(name, { minimum, maximum, fallback }, environment = process
   return value;
 }
 
+function booleanInput(name, fallback, environment = process.env) {
+  const raw = input(name, environment);
+  if (!raw) return fallback;
+  if (['true', '1', 'yes'].includes(raw.toLowerCase())) return true;
+  if (['false', '0', 'no'].includes(raw.toLowerCase())) return false;
+  throw new Error(`${name} must be true or false.`);
+}
+
 async function eventPayload(environment = process.env, files = { readFile }) {
   const path = environment.GITHUB_EVENT_PATH;
   if (!path) return {};
@@ -99,6 +107,45 @@ function pause(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
+function releaseBodyWithVideo(releaseBody, videoUrl) {
+  const block = [
+    '<!-- angles-release-video:start -->',
+    '## 🎬 Product video',
+    '',
+    `[Watch the release video](${videoUrl})`,
+    '<!-- angles-release-video:end -->',
+  ].join('\n');
+  const pattern = /<!-- angles-release-video:start -->[\s\S]*?<!-- angles-release-video:end -->/;
+  if (pattern.test(releaseBody || '')) return (releaseBody || '').replace(pattern, block);
+  return [releaseBody || '', block].filter(Boolean).join('\n\n');
+}
+
+async function publishVideoToRelease({ event, token, videoUrl, environment, fetchImpl }) {
+  if (!event.release?.url || !event.release?.html_url) {
+    throw new Error('publish-to-release requires this Action to run from a GitHub Release event.');
+  }
+  if (!token) {
+    throw new Error('Missing github-token. Pass github-token: ${{ github.token }} and grant contents: write.');
+  }
+  const releaseBody = releaseBodyWithVideo(event.release.body, videoUrl);
+  const response = await fetchImpl(event.release.url, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ body: releaseBody }),
+  });
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Could not add the video to the GitHub Release (HTTP ${response.status}): ${details}`);
+  }
+  const release = await response.json();
+  return release.html_url || event.release.html_url;
+}
+
 async function run({ environment = process.env, fetchImpl = fetch, files = { readFile, appendFile }, sleep = pause, now = Date.now } = {}) {
   const apiKey = input('api-key', environment);
   if (!apiKey) throw new Error('Missing api-key. Store it as an Actions secret and pass it to this Action.');
@@ -125,6 +172,7 @@ async function run({ environment = process.env, fetchImpl = fetch, files = { rea
   const timeoutSeconds = numberInput('timeout-seconds', { minimum: 60, maximum: 3600, fallback: 900 }, environment);
   const pollIntervalSeconds = numberInput('poll-interval-seconds', { minimum: 3, maximum: 60, fallback: 10 }, environment);
   const requestedTemplateId = input('template-id', environment);
+  const publishToRelease = booleanInput('publish-to-release', true, environment);
   const apiBaseUrl = (input('api-base-url', environment) || DEFAULT_API_BASE_URL).replace(/\/$/, '');
 
   console.log(`Creating an Angles video from ${url.toString()}`);
@@ -200,13 +248,25 @@ async function run({ environment = process.env, fetchImpl = fetch, files = { rea
   }
 
   await writeOutput('video-url', video.videoUrl, environment, files);
+  let releaseUrl;
+  if (publishToRelease) {
+    releaseUrl = await publishVideoToRelease({
+      event,
+      token: input('github-token', environment),
+      videoUrl: video.videoUrl,
+      environment,
+      fetchImpl,
+    });
+    await writeOutput('release-url', releaseUrl, environment, files);
+  }
   await writeSummary([
     '## Angles Release Video',
     `Video: ${video.videoUrl}`,
+    ...(releaseUrl ? [`Added to Release: ${releaseUrl}`] : []),
     ...(video.editUrl ? [`Edit: ${video.editUrl}`] : []),
   ], environment, files);
   console.log(`Angles video ready: ${video.videoUrl}`);
-  return { videoId: selectedConcept.videoId, videoUrl: video.videoUrl, editUrl: video.editUrl };
+  return { videoId: selectedConcept.videoId, videoUrl: video.videoUrl, editUrl: video.editUrl, releaseUrl };
 }
 
 if (require.main === module) {
@@ -216,4 +276,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { input, numberInput, renderSettings, run, selectConcept };
+module.exports = { booleanInput, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept };

@@ -1,0 +1,14 @@
+{
+  "name": "anglesvideo-release-video-action",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Action wrapper for Angles repo video",
+  "scripts": {
+    "build": "mkdir -p dist && cp src/index.js dist/index.js",
+    "test": "node --test test/index.test.js",
+    "check": "node --check src/index.js && node --check dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

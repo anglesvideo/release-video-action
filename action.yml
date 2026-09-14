@@ -1,0 +1,46 @@
+name: Angles Release Video
+description: Create a product video from your repository homepage whenever you publish a GitHub Release.
+author: Angles
+
+branding:
+  icon: video
+  color: purple
+
+inputs:
+  api-key:
+    description: Angles API key with concepts:write, videos:read, and videos:render capabilities.
+    required: true
+  product-url:
+    description: Product homepage to turn into a video. Defaults to the repository homepage from the event payload.
+    required: false
+  api-base-url:
+    description: Base URL for the Angles Developer API.
+    required: false
+    default: https://api.angles.video/api/developer/v1
+  template-id:
+    description: Optional existing Angles template ID. Defaults to the first template recommended by Angles.
+    required: false
+  aspect-ratio:
+    description: Video aspect ratio.
+    required: false
+    default: landscape
+  timeout-seconds:
+    description: Maximum time to wait for rendering before failing the workflow.
+    required: false
+    default: "900"
+  poll-interval-seconds:
+    description: Seconds between render-status checks.
+    required: false
+    default: "10"
+
+outputs:
+  video-url:
+    description: URL of the rendered video.
+  edit-url:
+    description: URL to edit the video in Angles.
+  video-id:
+    description: ID of the Angles video.
+
+runs:
+  using: node20
+  main: dist/index.js

@@ -4,7 +4,14 @@ const { randomUUID } = require('node:crypto');
 const DEFAULT_API_BASE_URL = 'https://api.angles.video/api/developer/v1';
 
 function input(name, environment = process.env) {
-  return (environment[`INPUT_${name.toUpperCase().replace(/-/g, '_')}`] || '').trim();
+  // GitHub Actions preserves hyphens in INPUT_* names: `api-key` becomes
+  // `INPUT_API-KEY`. Keep the underscore form for local test environments.
+  const upperName = name.toUpperCase();
+  return (
+    environment[`INPUT_${upperName}`]
+    || environment[`INPUT_${upperName.replace(/-/g, '_')}`]
+    || ''
+  ).trim();
 }
 
 function numberInput(name, { minimum, maximum, fallback }, environment = process.env) {

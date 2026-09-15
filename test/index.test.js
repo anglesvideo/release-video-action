@@ -6,6 +6,7 @@ const { join } = require('node:path');
 const { booleanInput, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept } = require('../src/index.js');
 
 test('reads GitHub Action inputs and validates numeric inputs', () => {
+  assert.equal(input('api-key', { 'INPUT_API-KEY': ' key ' }), 'key');
   assert.equal(input('api-key', { INPUT_API_KEY: ' key ' }), 'key');
   assert.equal(numberInput('timeout-seconds', { minimum: 1, maximum: 10, fallback: 5 }, {}), 5);
   assert.throws(

@@ -4,7 +4,12 @@ const { randomUUID } = require('node:crypto');
 const DEFAULT_API_BASE_URL = 'https://api.angles.video/api/developer/v1';
 
 function input(name, environment = process.env) {
-  return (environment[`INPUT_${name.toUpperCase().replace(/-/g, '_')}`] || '').trim();
+  const upperName = name.toUpperCase();
+  return (
+    environment[`INPUT_${upperName}`]
+    || environment[`INPUT_${upperName.replace(/-/g, '_')}`]
+    || ''
+  ).trim();
 }
 
 function numberInput(name, { minimum, maximum, fallback }, environment = process.env) {

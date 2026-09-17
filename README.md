@@ -2,7 +2,9 @@
 
 Create an Angles product video from your repository homepage whenever you publish a GitHub Release.
 
-The Action sends only the homepage URL to Angles. It does not read your repository files or Release Notes. It uses the existing Angles URL-to-video flow and an existing recommended template.
+The Action sends Angles your homepage URL and the published Release: its tag, title and notes. It does not read your repository files. Angles renders the video with its Release Video template: the version, what the release notes say changed, your live homepage, what the product does, and where to get it.
+
+Only the bullet points in the release notes are shown as changes, word for word. Angles never adds a change the notes do not list. If the notes have no list, that scene uses the narration instead.
 
 ## Setup
 
@@ -67,7 +69,7 @@ Set `publish-to-release: false` for a manual test run or when you only want the 
 | `github-token` | When publishing | — | GitHub token for updating the Release body. Pass `${{ github.token }}`. |
 | `product-url` | No | Repository homepage | Homepage to use as the video source. |
 | `api-base-url` | No | `https://api.angles.video/api/developer/v1` | Angles Developer API base URL. |
-| `template-id` | No | First Angles recommendation | Existing template to use. |
+| `template-id` | No | `release_video` on a Release, otherwise the first Angles recommendation | Existing template to use instead. |
 | `aspect-ratio` | No | `landscape` | `landscape` or `portrait`. |
 | `timeout-seconds` | No | `900` | Maximum render wait, between 60 and 3600 seconds. |
 | `poll-interval-seconds` | No | `10` | Status check interval, between 3 and 60 seconds. |

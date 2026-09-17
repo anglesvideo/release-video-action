@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { mkdtemp, readFile, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
 const { join } = require('node:path');
-const { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept } = require('../src/index.js');
+const { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, releaseContext, renderSettings, run, selectConcept } = require('../src/index.js');
 
 test('reads GitHub Action inputs and validates numeric inputs', () => {
   assert.equal(input('api-key', { 'INPUT_API-KEY': ' key ' }), 'key');
@@ -33,6 +33,17 @@ test('adds one replaceable video block to a Release body', () => {
   assert.equal((twice.match(/angles-release-video:start/g) || []).length, 1);
 });
 
+test('sends the Release tag, title and notes, without a previous video block', () => {
+  const body = releaseBodyWithVideo('## Changes\n\n- Fix login', 'https://cdn.example.com/old.mp4');
+  assert.deepEqual(
+    releaseContext({ release: { tag_name: ' v1.4.0 ', name: 'Faster previews', body } }),
+    { tagName: 'v1.4.0', name: 'Faster previews', notes: '## Changes\n\n- Fix login' }
+  );
+  assert.deepEqual(releaseContext({ release: { tag_name: 'v2.0.0', body: null } }), { tagName: 'v2.0.0' });
+  // A manual run has no Release, and Angles picks a template as before.
+  assert.equal(releaseContext({}), undefined);
+});
+
 test('uses the first recommended existing template and supported scraped screenshots', () => {
   const response = {
     source: { productImages: ['https://cdn.example.com/one.png', 'https://cdn.example.com/two.png'] },
@@ -59,7 +70,9 @@ test('runs the URL-to-video flow and writes outputs and a summary', async () => 
     release: {
       url: 'https://api.github.test/repos/angles/repo/releases/1',
       html_url: 'https://github.test/angles/repo/releases/tag/v1.0.0',
-      body: '## Changes',
+      tag_name: 'v1.0.0',
+      name: 'First release',
+      body: '## Changes\n\n- Fix login',
     },
   }));
   const requests = [];
@@ -98,6 +111,11 @@ test('runs the URL-to-video flow and writes outputs and a summary', async () => 
 
   assert.equal(result.videoUrl, 'https://cdn.angles.video/video.mp4');
   assert.equal(requests.length, 5);
+  assert.deepEqual(JSON.parse(requests[0].options.body).release, {
+    tagName: 'v1.0.0',
+    name: 'First release',
+    notes: '## Changes\n\n- Fix login',
+  });
   assert.equal(requests.at(-1).options.method, 'PATCH');
   assert.match(requests.at(-1).options.body, /Product video/);
   assert.match(await readFile(outputPath, 'utf8'), /video-url=https:\/\/cdn\.angles\.video\/video\.mp4/);

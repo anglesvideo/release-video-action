@@ -21,7 +21,7 @@ inputs:
     required: false
     default: https://api.angles.video/api/developer/v1
   template-id:
-    description: Optional existing Angles template ID. Defaults to the first template recommended by Angles.
+    description: Optional existing Angles template ID. Defaults to Release Video when run from a Release, otherwise the first template recommended by Angles.
     required: false
   aspect-ratio:
     description: Video aspect ratio.

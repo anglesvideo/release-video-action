@@ -92,6 +92,27 @@ function renderSettings(conceptResponse, selectedConcept, templateId) {
   };
 }
 
+// The Release this run was triggered by, as Angles reads it: the tag, the title
+// and the notes. Angles turns the notes' bullet points into the "what changed"
+// scene and picks its Release Video template. The video block this Action
+// writes into the body is removed first, so a re-run does not feed the previous
+// video link back in as a release note.
+function releaseContext(event) {
+  const release = event?.release;
+  const tagName = typeof release?.tag_name === 'string' ? release.tag_name.trim() : '';
+  if (!tagName) return undefined;
+  const notes = (typeof release.body === 'string' ? release.body : '')
+    .replace(/<!-- angles-release-video:start -->[\s\S]*?<!-- angles-release-video:end -->/g, '')
+    .trim()
+    .slice(0, 20000);
+  const name = typeof release.name === 'string' ? release.name.trim().slice(0, 160) : '';
+  return {
+    tagName: tagName.slice(0, 64),
+    ...(name ? { name } : {}),
+    ...(notes ? { notes } : {}),
+  };
+}
+
 function selectConcept(conceptResponse, requestedTemplateId) {
   const concepts = conceptResponse?.concepts;
   if (!Array.isArray(concepts) || concepts.length === 0) {
@@ -193,7 +214,8 @@ async function run({ environment = process.env, fetchImpl = fetch, files = { rea
   const publishToRelease = booleanInput('publish-to-release', true, environment);
   const apiBaseUrl = (input('api-base-url', environment) || DEFAULT_API_BASE_URL).replace(/\/$/, '');
 
-  console.log(`Creating an Angles video from ${url.toString()}`);
+  const release = releaseContext(event);
+  console.log(`Creating an Angles video from ${url.toString()}${release ? ` for ${release.tagName}` : ''}`);
   const conceptResponse = await request(
     apiBaseUrl,
     apiKey,
@@ -204,6 +226,7 @@ async function run({ environment = process.env, fetchImpl = fetch, files = { rea
         url: url.toString(),
         aspectRatio,
         ...(requestedTemplateId ? { preferredTemplateId: requestedTemplateId } : {}),
+        ...(release ? { release } : {}),
       }),
     },
     fetchImpl
@@ -294,4 +317,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept };
+module.exports = { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, releaseContext, renderSettings, run, selectConcept };

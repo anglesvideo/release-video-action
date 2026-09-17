@@ -51,5 +51,5 @@ outputs:
     description: GitHub Release URL after the video link has been added.
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js

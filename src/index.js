@@ -42,6 +42,20 @@ async function eventPayload(environment = process.env, files = { readFile }) {
   }
 }
 
+// Angles puts the specific reason (for example validation errors) in
+// `details.message`; the top-level `message` can be a generic
+// "Bad Request Exception".
+function errorMessage(body, status) {
+  const candidates = body && typeof body === 'object'
+    ? [body.details?.message, body.message]
+    : [];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length) return candidate.join('; ');
+    if (typeof candidate === 'string' && candidate.trim()) return candidate;
+  }
+  return `Angles API request failed with HTTP ${status}`;
+}
+
 async function request(apiBaseUrl, apiKey, path, options = {}, fetchImpl = fetch) {
   const response = await fetchImpl(`${apiBaseUrl}${path}`, {
     ...options,
@@ -60,10 +74,7 @@ async function request(apiBaseUrl, apiKey, path, options = {}, fetchImpl = fetch
     body = raw;
   }
   if (!response.ok) {
-    const message = body && typeof body === 'object' && body.message
-      ? Array.isArray(body.message) ? body.message.join('; ') : String(body.message)
-      : `Angles API request failed with HTTP ${response.status}`;
-    throw new Error(message);
+    throw new Error(errorMessage(body, response.status));
   }
   return body;
 }
@@ -283,4 +294,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { booleanInput, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept };
+module.exports = { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept };

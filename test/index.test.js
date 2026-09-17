@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { mkdtemp, readFile, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
 const { join } = require('node:path');
-const { booleanInput, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept } = require('../src/index.js');
+const { booleanInput, errorMessage, input, numberInput, releaseBodyWithVideo, renderSettings, run, selectConcept } = require('../src/index.js');
 
 test('reads GitHub Action inputs and validates numeric inputs', () => {
   assert.equal(input('api-key', { 'INPUT_API-KEY': ' key ' }), 'key');
@@ -14,6 +14,15 @@ test('reads GitHub Action inputs and validates numeric inputs', () => {
     /between 1 and 10/
   );
   assert.equal(booleanInput('publish-to-release', true, { INPUT_PUBLISH_TO_RELEASE: 'false' }), false);
+});
+
+test('prefers the specific API error reason over the generic message', () => {
+  assert.equal(
+    errorMessage({ message: 'Bad Request Exception', details: { message: ['url must be a URL'] } }, 400),
+    'url must be a URL'
+  );
+  assert.equal(errorMessage({ message: 'Insufficient credits', details: 'Insufficient credits' }, 402), 'Insufficient credits');
+  assert.equal(errorMessage('<html>', 502), 'Angles API request failed with HTTP 502');
 });
 
 test('adds one replaceable video block to a Release body', () => {

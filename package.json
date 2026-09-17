@@ -1,5 +1,5 @@
 {
-  "name": "anglesvideo-release-video-action",
+  "name": "release-video-action",
   "version": "1.0.0",
   "private": true,
   "description": "GitHub Action wrapper for Angles repo video",

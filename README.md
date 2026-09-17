@@ -24,7 +24,7 @@ jobs:
   video:
     runs-on: ubuntu-latest
     steps:
-      - uses: anglesvideo/anglesvideo-release-video-action@v1
+      - uses: anglesvideo/release-video-action@v1
         with:
           api-key: ${{ secrets.ANGLES_API_KEY }}
           github-token: ${{ github.token }}
@@ -33,7 +33,7 @@ jobs:
 Set the repository's **Website** field to your product homepage. Or provide a URL explicitly:
 
 ```yaml
-      - uses: anglesvideo/anglesvideo-release-video-action@v1
+      - uses: anglesvideo/release-video-action@v1
         with:
           api-key: ${{ secrets.ANGLES_API_KEY }}
           product-url: https://example.com
@@ -51,7 +51,7 @@ jobs:
   video:
     runs-on: ubuntu-latest
     steps:
-      - uses: anglesvideo/anglesvideo-release-video-action@v1
+      - uses: anglesvideo/release-video-action@v1
         with:
           api-key: ${{ secrets.ANGLES_API_KEY }}
           github-token: ${{ github.token }}
@@ -82,8 +82,3 @@ Set `publish-to-release: false` for a manual test run or when you only want the 
 | `video-id` | Angles video ID. |
 | `release-url` | Updated GitHub Release URL. |
 
-## Release
-
-This repository is ready for GitHub Marketplace: keep `action.yml` at the repository root, publish it as a public repository, then create a tagged release such as `v1.0.0` and choose **Publish this Action to the GitHub Marketplace**.
-
-The committed `dist/index.js` is the runtime GitHub executes. After modifying `src/index.js`, run `npm run build` and commit both files.
